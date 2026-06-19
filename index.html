@@ -109,10 +109,9 @@ body{
 .info-row{
     display:flex;
     justify-content:space-between;
-    gap:10px;
+    gap:12px;
     padding:10px 0;
     border-bottom:1px solid #eee;
-    word-break:break-word;
 }
 
 .info-row:last-child{
@@ -126,6 +125,7 @@ body{
 .value{
     font-weight:600;
     text-align:right;
+    word-break:break-word;
 }
 
 .item-row{
@@ -181,7 +181,8 @@ body{
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycby159ozdlV_nwB9GcdbH3bnLZ4NzrR93cV895ppllcvvZZmwqoriPftOfp3EzyNTHN8/exec";
+const API_URL =
+"https://script.google.com/macros/s/AKfycby159ozdlV_nwB9GcdbH3bnLZ4NzrR93cV895ppllcvvZZmwqoriPftOfp3EzyNTHN8/exec";
 
 function getStatusClass(status){
 
@@ -197,15 +198,10 @@ function getStatusClass(status){
 
 function loadOrder(){
 
-    const hash = window.location.hash || "";
-
     const orderId = decodeURIComponent(
-        hash.replace(/^#\/?/, "")
+        (window.location.hash || "")
+        .replace(/^#\/?/, "")
     ).trim();
-
-    console.log("URL:", window.location.href);
-    console.log("Hash:", hash);
-    console.log("Order ID:", orderId);
 
     if(!orderId){
 
@@ -229,127 +225,150 @@ function loadOrder(){
     </div>
     `;
 
-    fetch(
-        API_URL +
-        "?orderId=" +
-        encodeURIComponent(orderId)
-    )
-    .then(response => response.json())
-    .then(data => {
+    const callbackName =
+        "jsonp_" + Date.now();
 
-        console.log("API Response:", data);
-
-        if(!data.success){
-
-            document.getElementById("content").innerHTML =
-            `
-            <div class="error">
-                Order Not Found
-                <br><br>
-                ${orderId}
-            </div>
-            `;
-            return;
-        }
-
-        let itemsHtml = "";
+    window[callbackName] = function(data){
 
         try{
 
-            const items = JSON.parse(data.items);
+            delete window[callbackName];
 
-            Object.entries(items).forEach(([name, qty]) => {
+            if(!data.success){
 
-                itemsHtml += `
+                document.getElementById("content").innerHTML =
+                `
+                <div class="error">
+                    Order Not Found
+                </div>
+                `;
+                return;
+            }
+
+            let itemsHtml = "";
+
+            try{
+
+                const items =
+                    JSON.parse(data.items);
+
+                Object.entries(items).forEach(
+                    ([name, qty]) => {
+
+                    itemsHtml += `
                     <div class="item-row">
                         <span>${name}</span>
                         <strong>x${qty}</strong>
                     </div>
+                    `;
+                });
+
+            }catch(err){
+
+                itemsHtml =
+                `
+                <div class="item-row">
+                    <span>${data.items}</span>
+                </div>
                 `;
-            });
+            }
 
-        }catch(err){
-
-            itemsHtml =
+            document.getElementById("content").innerHTML =
             `
-            <div class="item-row">
-                <span>${data.items}</span>
+            <div class="token-box">
+
+                <div class="token-label">
+                    TOKEN NUMBER
+                </div>
+
+                <div class="token-number">
+                    ${data.tokenNo}
+                </div>
+
+                <div class="status ${getStatusClass(data.status)}">
+                    ${data.status}
+                </div>
+
+            </div>
+
+            <div class="card" style="margin-top:20px;">
+
+                <div class="section-title">
+                    Order Details
+                </div>
+
+                <div class="info-row">
+                    <span class="label">Order ID</span>
+                    <span class="value">${data.orderId}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="label">Table</span>
+                    <span class="value">${data.table}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="label">Timestamp</span>
+                    <span class="value">${data.timestamp}</span>
+                </div>
+
+            </div>
+
+            <div class="card" style="margin-top:20px;">
+
+                <div class="section-title">
+                    Items Ordered
+                </div>
+
+                ${itemsHtml}
+
+            </div>
+
+            <div class="footer">
+                Thank you for visiting Polayya Tea Stall
+            </div>
+            `;
+
+        }catch(error){
+
+            console.error(error);
+
+            document.getElementById("content").innerHTML =
+            `
+            <div class="error">
+                Unable to display order
             </div>
             `;
         }
+    };
 
-        document.getElementById("content").innerHTML =
-        `
-        <div class="token-box">
+    const script =
+        document.createElement("script");
 
-            <div class="token-label">
-                TOKEN NUMBER
-            </div>
+    script.src =
+        API_URL +
+        "?orderId=" +
+        encodeURIComponent(orderId) +
+        "&callback=" +
+        callbackName;
 
-            <div class="token-number">
-                ${data.tokenNo || "-"}
-            </div>
-
-            <div class="status ${getStatusClass(data.status)}">
-                ${data.status || "Unknown"}
-            </div>
-
-        </div>
-
-        <div class="card" style="margin-top:20px;">
-
-            <div class="section-title">
-                Order Details
-            </div>
-
-            <div class="info-row">
-                <span class="label">Order ID</span>
-                <span class="value">${data.orderId || "-"}</span>
-            </div>
-
-            <div class="info-row">
-                <span class="label">Table</span>
-                <span class="value">${data.table || "-"}</span>
-            </div>
-
-            <div class="info-row">
-                <span class="label">Timestamp</span>
-                <span class="value">${data.timestamp || "-"}</span>
-            </div>
-
-        </div>
-
-        <div class="card" style="margin-top:20px;">
-
-            <div class="section-title">
-                Items Ordered
-            </div>
-
-            ${itemsHtml}
-
-        </div>
-
-        <div class="footer">
-            Thank you for visiting Polayya Tea Stall
-        </div>
-        `;
-    })
-    .catch(error => {
-
-        console.error(error);
+    script.onerror = function(){
 
         document.getElementById("content").innerHTML =
         `
         <div class="error">
-            Unable to load order details.
-            <br><br>
-            Check browser console (F12).
+            Unable to load order
         </div>
         `;
-    });
+    };
+
+    document.body.appendChild(script);
 }
 
-window.addEventListener("hashchange", loadOrder);
+window.addEventListener(
+    "hashchange",
+    loadOrder
+);
 
 loadOrder();
 
