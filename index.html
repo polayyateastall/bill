@@ -177,7 +177,7 @@ body{
 <script>
 
 const API_URL =
-"https://script.google.com/macros/s/AKfycby159ozdlV_nwB9GcdbH3bnLZ4NzrR93cV895ppllcvvZZmwqoriPftOfp3EzyNTHN8/exec";
+"https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnQ61P25j-JviC3v9eENdlxl7YS5RSMhKl02wEsWtraTyf46j9K5unI0U7Ox76i8PKPyJ1DoLbblI4wMZW2ty3HbrPtPv65T06_tYr_GujR0wz37Ee1XKsjIjKSTMBXJ47Wu1USs-G3jtJwnlZVGOLwZ6iC4uECpHGCRTN7stOVVNRVNdmzypZcLKLXbJ7f3dW7XaSHdhNSgfyMCiIr-6MIUllW15KFEeV7aO6iRsmPxJbPxIt8FHWYr5TpjSEzulNhMF8KmrS9WAjPN7o-v7B6RMzwwtdNqcmoB2gKdJavONq6cCXtAFcMtST9inIA1YRgZ0u8z2cVFt8HW-xGhzPLkvTSxWA&lib=MFgd-faURngbpatnuVgFrd926mfFZD9lt";
 
 function formatDate(timestamp){
 
@@ -369,7 +369,7 @@ function loadOrder(){
 
     script.src =
     API_URL +
-    "?orderId=" +
+    "&orderId=" +
     encodeURIComponent(orderId) +
     "&callback=billCallback";
 
