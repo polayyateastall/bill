@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Polayya Tea Stall - Order Status</title>
+<title>Polayya Tea Stall - Receipt</title>
 
 <style>
 
@@ -18,7 +17,6 @@
 body{
     font-family:Arial,sans-serif;
     background:#f5f5f5;
-    min-height:100vh;
     color:#333;
 }
 
@@ -27,7 +25,7 @@ body{
     color:white;
     text-align:center;
     padding:24px 16px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.15);
+    box-shadow:0 2px 8px rgba(0,0,0,.15);
 }
 
 .header h1{
@@ -36,12 +34,11 @@ body{
 }
 
 .header p{
-    opacity:0.9;
-    font-size:14px;
+    opacity:.9;
 }
 
 .container{
-    max-width:600px;
+    max-width:700px;
     margin:auto;
     padding:16px;
 }
@@ -51,7 +48,7 @@ body{
     border-radius:16px;
     padding:20px;
     margin-top:16px;
-    box-shadow:0 2px 12px rgba(0,0,0,0.08);
+    box-shadow:0 2px 12px rgba(0,0,0,.08);
 }
 
 .token-box{
@@ -59,57 +56,64 @@ body{
 }
 
 .token-label{
-    color:#666;
+    color:#777;
     font-size:14px;
 }
 
 .token-number{
-    font-size:56px;
+    font-size:64px;
     font-weight:bold;
     color:#8B4513;
-    margin-top:8px;
+    margin:10px 0;
 }
 
 .status{
     display:inline-block;
-    margin-top:12px;
     padding:10px 18px;
     border-radius:999px;
     font-weight:bold;
-    font-size:14px;
+    margin-top:10px;
 }
 
-.preparing{
+.status-yellow{
     background:#fff3cd;
     color:#856404;
 }
 
-.ready{
+.status-green{
     background:#d4edda;
     color:#155724;
 }
 
-.delivered{
-    background:#d1ecf1;
-    color:#0c5460;
+.status-served{
+    background:#28a745;
+    color:white;
+    animation:pulse 2s infinite;
 }
 
-.cancelled{
-    background:#f8d7da;
-    color:#721c24;
+@keyframes pulse{
+    0%{transform:scale(1);}
+    50%{transform:scale(1.05);}
+    100%{transform:scale(1);}
+}
+
+.ready-message{
+    margin-top:14px;
+    color:#155724;
+    font-size:14px;
+    font-weight:bold;
 }
 
 .section-title{
+    color:#8B4513;
     font-size:18px;
     font-weight:bold;
-    margin-bottom:12px;
-    color:#8B4513;
+    margin-bottom:14px;
 }
 
 .info-row{
     display:flex;
     justify-content:space-between;
-    gap:12px;
     padding:10px 0;
     border-bottom:1px solid #eee;
 }
@@ -125,29 +129,54 @@ body{
 .value{
     font-weight:600;
     text-align:right;
-    word-break:break-word;
 }
 
-.item-row{
+.invoice-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.invoice-table th{
+    text-align:left;
+    padding:12px 8px;
+    border-bottom:2px solid #ddd;
+    font-size:14px;
+}
+
+.invoice-table td{
+    padding:12px 8px;
+    border-bottom:1px solid #eee;
+    font-size:14px;
+}
+
+.invoice-table th:nth-child(2),
+.invoice-table td:nth-child(2),
+.invoice-table th:nth-child(3),
+.invoice-table td:nth-child(3),
+.invoice-table th:nth-child(4),
+.invoice-table td:nth-child(4){
+    text-align:right;
+}
+
+.total-row{
     display:flex;
     justify-content:space-between;
-    padding:12px 0;
-    border-bottom:1px solid #eee;
+    margin-top:18px;
+    padding-top:18px;
+    border-top:2px solid #ddd;
+    font-size:26px;
+    font-weight:700;
+    color:#8B4513;
 }
 
-.item-row:last-child{
-    border-bottom:none;
-}
-
-.loading{
+.loading,
+.error{
     text-align:center;
     padding:40px;
 }
 
 .error{
-    text-align:center;
     color:red;
-    padding:40px 20px;
 }
 
 .footer{
@@ -158,24 +187,21 @@ body{
 }
 
 </style>
-
 </head>
 <body>
 
 <div class="header">
     <h1>Polayya Tea Stall</h1>
-    <p>Order Status</p>
+    <p>Order Receipt</p>
 </div>
 
 <div class="container">
 
-```
-<div id="content" class="card">
-    <div class="loading">
-        Loading Order...
+    <div id="content" class="card">
+        <div class="loading">
+            Loading Receipt...
+        </div>
     </div>
-</div>
-```
 
 </div>
 
@@ -184,23 +210,70 @@ body{
 const API_URL =
 "https://script.google.com/macros/s/AKfycby159ozdlV_nwB9GcdbH3bnLZ4NzrR93cV895ppllcvvZZmwqoriPftOfp3EzyNTHN8/exec";
 
-function getStatusClass(status){
+function getStatusInfo(status){
 
     status = (status || "").toLowerCase();
 
-    if(status.includes("preparing")) return "preparing";
-    if(status.includes("ready")) return "ready";
-    if(status.includes("delivered")) return "delivered";
-    if(status.includes("cancelled")) return "cancelled";
+    if(status === "pending"){
+        return {
+            text:"Order Sent to Kitchen",
+            className:"status-yellow"
+        };
+    }
 
-    return "preparing";
+    if(status === "preparing"){
+        return {
+            text:"Preparing",
+            className:"status-yellow"
+        };
+    }
+
+    if(status === "ready"){
+        return {
+            text:"Ready for Pickup",
+            className:"status-green"
+        };
+    }
+
+    if(status === "served"){
+        return {
+            text:"✓ Served",
+            className:"status-served"
+        };
+    }
+
+    return {
+        text:status,
+        className:"status-yellow"
+    };
+}
+
+function formatDate(timestamp){
+
+    try{
+
+        return new Date(timestamp)
+        .toLocaleString("en-IN",{
+            day:"2-digit",
+            month:"short",
+            year:"numeric",
+            hour:"numeric",
+            minute:"2-digit",
+            hour12:true
+        });
+
+    }catch(e){
+
+        return timestamp;
+    }
 }
 
 function loadOrder(){
 
-    const orderId = decodeURIComponent(
+    const orderId =
+    decodeURIComponent(
         (window.location.hash || "")
-        .replace(/^#\/?/, "")
+        .replace(/^#\/?/,"")
     ).trim();
 
     if(!orderId){
@@ -209,155 +282,154 @@ function loadOrder(){
         `
         <div class="error">
             Invalid Order URL
-            <br><br>
-            Example:
-            <br>
-            #/20260619182821-T12
         </div>
         `;
         return;
     }
 
-    document.getElementById("content").innerHTML =
-    `
-    <div class="loading">
-        Loading Order...
-    </div>
-    `;
-
     const callbackName =
-        "jsonp_" + Date.now();
+    "jsonp_" + Date.now();
 
     window[callbackName] = function(data){
 
-        try{
+        delete window[callbackName];
 
-            delete window[callbackName];
-
-            if(!data.success){
-
-                document.getElementById("content").innerHTML =
-                `
-                <div class="error">
-                    Order Not Found
-                </div>
-                `;
-                return;
-            }
-
-            let itemsHtml = "";
-
-            try{
-
-                const items =
-                    JSON.parse(data.items);
-
-                Object.entries(items).forEach(
-                    ([name, qty]) => {
-
-                    itemsHtml += `
-                    <div class="item-row">
-                        <span>${name}</span>
-                        <strong>x${qty}</strong>
-                    </div>
-                    `;
-                });
-
-            }catch(err){
-
-                itemsHtml =
-                `
-                <div class="item-row">
-                    <span>${data.items}</span>
-                </div>
-                `;
-            }
-
-            document.getElementById("content").innerHTML =
-            `
-            <div class="token-box">
-
-                <div class="token-label">
-                    TOKEN NUMBER
-                </div>
-
-                <div class="token-number">
-                    ${data.tokenNo}
-                </div>
-
-                <div class="status ${getStatusClass(data.status)}">
-                    ${data.status}
-                </div>
-
-            </div>
-
-            <div class="card" style="margin-top:20px;">
-
-                <div class="section-title">
-                    Order Details
-                </div>
-
-                <div class="info-row">
-                    <span class="label">Order ID</span>
-                    <span class="value">${data.orderId}</span>
-                </div>
-
-                <div class="info-row">
-                    <span class="label">Table</span>
-                    <span class="value">${data.table}</span>
-                </div>
-
-                <div class="info-row">
-                    <span class="label">Timestamp</span>
-                    <span class="value">${data.timestamp}</span>
-                </div>
-
-            </div>
-
-            <div class="card" style="margin-top:20px;">
-
-                <div class="section-title">
-                    Items Ordered
-                </div>
-
-                ${itemsHtml}
-
-            </div>
-
-            <div class="footer">
-                Thank you for visiting Polayya Tea Stall
-            </div>
-            `;
-
-        }catch(error){
-
-            console.error(error);
+        if(!data.success){
 
             document.getElementById("content").innerHTML =
             `
             <div class="error">
-                Unable to display order
+                Order Not Found
             </div>
             `;
+            return;
         }
+
+        const statusInfo =
+        getStatusInfo(data.status);
+
+        let rows = "";
+
+        data.billItems.forEach(item=>{
+
+            rows += `
+            <tr>
+                <td>${item.name}</td>
+                <td>${item.qty}</td>
+                <td>₹${item.rate}</td>
+                <td>₹${item.amount}</td>
+            </tr>
+            `;
+        });
+
+        const readyMessage =
+        data.status === "Ready"
+        ?
+        `
+        <div class="ready-message">
+            Please show this token while collecting your order at counter
+        </div>
+        `
+        :
+        "";
+
+        document.getElementById("content").innerHTML =
+        `
+        <div class="token-box">
+
+            <div class="token-label">
+                TOKEN NUMBER
+            </div>
+
+            <div class="token-number">
+                ${data.tokenNo}
+            </div>
+
+            <div class="status ${statusInfo.className}">
+                ${statusInfo.text}
+            </div>
+
+            ${readyMessage}
+
+        </div>
+
+        <div class="card">
+
+            <div class="section-title">
+                Order Details
+            </div>
+
+            <div class="info-row">
+                <span class="label">Order ID</span>
+                <span class="value">${data.orderId}</span>
+            </div>
+
+            <div class="info-row">
+                <span class="label">Table</span>
+                <span class="value">${data.table}</span>
+            </div>
+
+            <div class="info-row">
+                <span class="label">Order Time</span>
+                <span class="value">
+                    ${formatDate(data.timestamp)}
+                </span>
+            </div>
+
+        </div>
+
+        <div class="card">
+
+            <div class="section-title">
+                Invoice
+            </div>
+
+            <table class="invoice-table">
+
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Rate</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    ${rows}
+                </tbody>
+
+            </table>
+
+            <div class="total-row">
+                <span>TOTAL</span>
+                <span>₹${data.grandTotal}</span>
+            </div>
+
+        </div>
+
+        <div class="footer">
+            Thank you for visiting Polayya Tea Stall
+        </div>
+        `;
     };
 
     const script =
-        document.createElement("script");
+    document.createElement("script");
 
     script.src =
-        API_URL +
-        "?orderId=" +
-        encodeURIComponent(orderId) +
-        "&callback=" +
-        callbackName;
+    API_URL +
+    "?orderId=" +
+    encodeURIComponent(orderId) +
+    "&callback=" +
+    callbackName;
 
     script.onerror = function(){
 
         document.getElementById("content").innerHTML =
         `
         <div class="error">
-            Unable to load order
+            Unable to load receipt
         </div>
         `;
     };
