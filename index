@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Polayya Tea Stall - Order Status</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial,sans-serif;
+    background:#f5f5f5;
+    min-height:100vh;
+    color:#333;
+}
+
+.header{
+    background:#8B4513;
+    color:white;
+    text-align:center;
+    padding:24px 16px;
+    box-shadow:0 2px 8px rgba(0,0,0,0.15);
+}
+
+.header h1{
+    font-size:28px;
+    margin-bottom:4px;
+}
+
+.header p{
+    opacity:0.9;
+    font-size:14px;
+}
+
+.container{
+    max-width:600px;
+    margin:auto;
+    padding:16px;
+}
+
+.card{
+    background:white;
+    border-radius:16px;
+    padding:20px;
+    margin-top:16px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.08);
+}
+
+.token-box{
+    text-align:center;
+}
+
+.token-label{
+    color:#666;
+    font-size:14px;
+}
+
+.token-number{
+    font-size:56px;
+    font-weight:bold;
+    color:#8B4513;
+    margin-top:8px;
+}
+
+.status{
+    display:inline-block;
+    margin-top:12px;
+    padding:10px 18px;
+    border-radius:999px;
+    font-weight:bold;
+    font-size:14px;
+}
+
+.preparing{
+    background:#fff3cd;
+    color:#856404;
+}
+
+.ready{
+    background:#d4edda;
+    color:#155724;
+}
+
+.delivered{
+    background:#d1ecf1;
+    color:#0c5460;
+}
+
+.cancelled{
+    background:#f8d7da;
+    color:#721c24;
+}
+
+.section-title{
+    font-size:18px;
+    font-weight:bold;
+    margin-bottom:12px;
+    color:#8B4513;
+}
+
+.info-row{
+    display:flex;
+    justify-content:space-between;
+    padding:10px 0;
+    border-bottom:1px solid #eee;
+}
+
+.info-row:last-child{
+    border-bottom:none;
+}
+
+.label{
+    color:#666;
+}
+
+.value{
+    font-weight:600;
+}
+
+.item-row{
+    display:flex;
+    justify-content:space-between;
+    padding:12px 0;
+    border-bottom:1px solid #eee;
+}
+
+.item-row:last-child{
+    border-bottom:none;
+}
+
+.loading{
+    text-align:center;
+    padding:40px;
+}
+
+.error{
+    text-align:center;
+    color:red;
+    padding:40px 20px;
+}
+
+.footer{
+    text-align:center;
+    padding:24px;
+    color:#777;
+    font-size:13px;
+}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Polayya Tea Stall</h1>
+    <p>Order Status</p>
+</div>
+
+<div class="container">
+
+    <div id="content" class="card">
+        <div class="loading">
+            Loading Order...
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+const API_URL = "https://script.google.com/macros/s/AKfycby159ozdlV_nwB9GcdbH3bnLZ4NzrR93cV895ppllcvvZZmwqoriPftOfp3EzyNTHN8/exec";
+
+function getStatusClass(status){
+
+    status = (status || "").toLowerCase();
+
+    if(status.includes("preparing")) return "preparing";
+    if(status.includes("ready")) return "ready";
+    if(status.includes("delivered")) return "delivered";
+    if(status.includes("cancelled")) return "cancelled";
+
+    return "preparing";
+}
+
+const parts =
+window.location.pathname
+.split("/")
+.filter(Boolean);
+
+if(
+    parts.length !== 2 ||
+    parts[0].toLowerCase() !== "bill"
+){
+
+    document.getElementById("content").innerHTML =
+    `
+    <div class="error">
+        Invalid Order URL
+    </div>
+    `;
+
+}else{
+
+    const orderId = parts[1];
+
+    fetch(
+        API_URL +
+        "?orderId=" +
+        encodeURIComponent(orderId)
+    )
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        if(!data.success){
+
+            document.getElementById("content").innerHTML =
+            `
+            <div class="error">
+                Order Not Found
+            </div>
+            `;
+            return;
+        }
+
+        let itemsHtml = "";
+
+        try{
+
+            const items =
+            JSON.parse(data.items);
+
+            Object.entries(items).forEach(
+                ([name, qty]) => {
+
+                itemsHtml += `
+                    <div class="item-row">
+                        <span>${name}</span>
+                        <strong>x${qty}</strong>
+                    </div>
+                `;
+            });
+
+        }catch(err){
+
+            itemsHtml =
+            `
+            <div class="item-row">
+                <span>${data.items}</span>
+            </div>
+            `;
+        }
+
+        document.getElementById("content").innerHTML =
+        `
+        <div class="token-box">
+
+            <div class="token-label">
+                TOKEN NUMBER
+            </div>
+
+            <div class="token-number">
+                ${data.tokenNo}
+            </div>
+
+            <div class="status ${getStatusClass(data.status)}">
+                ${data.status}
+            </div>
+
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+
+            <div class="section-title">
+                Order Details
+            </div>
+
+            <div class="info-row">
+                <span class="label">Order ID</span>
+                <span class="value">${data.orderId}</span>
+            </div>
+
+            <div class="info-row">
+                <span class="label">Table</span>
+                <span class="value">${data.table}</span>
+            </div>
+
+            <div class="info-row">
+                <span class="label">Timestamp</span>
+                <span class="value">${data.timestamp}</span>
+            </div>
+
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+
+            <div class="section-title">
+                Items Ordered
+            </div>
+
+            ${itemsHtml}
+
+        </div>
+
+        <div class="footer">
+            Thank you for visiting Polayya Tea Stall
+        </div>
+        `;
+    })
+
+    .catch(error => {
+
+        console.error(error);
+
+        document.getElementById("content").innerHTML =
+        `
+        <div class="error">
+            Unable to load order details
+        </div>
+        `;
+    });
+}
+
+</script>
+
+</body>
+</html>
